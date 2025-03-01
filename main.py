@@ -1,104 +1,112 @@
-from tkinter import *
-import tkinter
-from tkinter import messagebox, ttk
+import pygame
+import sys
+import subprocess  # Импортируем модуль для запуска других скриптов
 
+# Инициализация pygame
+pygame.init()
 
-def on_closing():
-    if messagebox.askokcancel("Выход из приложения", "Хотите выйти из приложения?"):
-        tk.destroy()
+# Настройки окна
+WIDTH, HEIGHT = 1400, 793
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("BioStudy")
 
+# Загрузка изображений
+bg = pygame.image.load("background.png")
+button_map_img = pygame.image.load("button_map.png")
+next_img = pygame.image.load("next.png")
+prev_img = pygame.image.load("prev.png")
+play_img = pygame.image.load("play.png")
+all_schemes_img = pygame.image.load("all_schemes.png")
+settings_img = pygame.image.load("settings.png")
+statistics_img = pygame.image.load("statistics.png")
+bar_img = pygame.image.load("bar.png")
+medal_img = pygame.image.load("medal.png")
 
-tk = Tk()
-tk.protocol("WM_DELETE_WINDOW", on_closing)
-tk.title("BioStudy")
-tk.resizable()
-tk.wm_attributes("-topmost", 1)
+# Цвета
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
 
-bg = PhotoImage(file="background.png")  # СДЕЛАТЬ НОРМАЛЬНЫЙ ФОН
-ccanvas = Canvas(tk, width=1400,
-                 height=793)  # на весь экран должно быть
-ccanvas.pack(fill="both", expand=True)
-ccanvas.create_image(0, 0, image=bg, anchor="nw")
+# Шрифт
+font = pygame.font.Font(None, 36)
 
-
+# Функции для кнопок
 def open_map():
-    pass
-
-
-# кнопка перехода в теорию
-our_button = PhotoImage(file="button_map.png")
-# Button(tk, image=our_button, highlightthickness=0, bd=0, command=lambda: print("Clicked!")).place(x=130, y=100)
-# Button(tk, image=our_button, highlightthickness=0, bd=0, command=bg_color_red).place(x=130, y=100)
-id_button1 = Button(tk, image=our_button, highlightthickness=0, bd=0, command=open_map)
-id_button1.place(x=428, y=221)
-
+    print("Открыть карту")
+    # Запуск файла map.py
+    subprocess.Popen([sys.executable, "map.py"])
 
 def next_map():
-    pass
-
+    print("Следующая карта")
 
 def prev_map():
-    pass
-
-
-# кнопки переключения карты на следующую и на предыдущую
-n_button = PhotoImage(file="next.png")
-id_next = Button(tk, image=n_button, highlightthickness=0, bd=0, command=next_map)
-id_next.place(x=998.5, y=370.8)
-p_button = PhotoImage(file="prev.png")
-id_next = Button(tk, image=p_button, highlightthickness=0, bd=0, command=prev_map)
-id_next.place(x=351, y=370.8)
-
+    print("Предыдущая карта")
 
 def play_menu():
-    pass
-
-
-# кнопка начала игры
-pl_button = PhotoImage(file="play.png")
-id_play = Button(tk, image=pl_button, highlightthickness=0, bd=0, command=play_menu)
-id_play.place(x=546, y=643)
-
+    print("Начать игру")
 
 def schemes():
-    pass
-
-
-# Все схемы
-sch_button = PhotoImage(file="all_schemes.png")
-id_schemes = Button(tk, image=sch_button, highlightthickness=0, bd=0, command=schemes)
-id_schemes.place(x=55, y=643)
-
+    print("Все схемы")
 
 def settings():
-    pass
-
-
-# Настройки
-set_button = PhotoImage(file="settings.png")
-id_setting = Button(tk, image=set_button, highlightthickness=0, bd=0, command=settings)
-id_setting.place(x=1261.3, y=47.4)
-
+    print("Настройки")
 
 def statistics():
-    pass
+    print("Статистика")
 
+# Класс для кнопок
+class Button:
+    def __init__(self, x, y, image, action):
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.action = action
 
-# Статистика
-st_button = PhotoImage(file="statistics.png")
-id_statistics = Button(tk, image=st_button, highlightthickness=0, bd=0, command=statistics)
-id_statistics.place(x=1256.9, y=234.3)
+    def draw(self, screen):
+        screen.blit(self.image, self.rect.topleft)
 
-# Опыт
-bar_button = PhotoImage(file="bar.png")
-id_bar = Button(tk, image=bar_button, highlightthickness=0, bd=0)
-id_bar.place(x=462, y=47.4)
-md_button = PhotoImage(file="medal.png")
-id_medal = Label(tk, image=md_button, highlightthickness=0, bd=0)
-id_medal.place(x=451.8, y=38.5)
+    def check_click(self, pos):
+        if self.rect.collidepoint(pos):
+            self.action()
 
-# Шкала опыта
-progres_bar = ttk.Progressbar(orient="horizontal", length=370, value=20)
-progres_bar.place(x=515, y=60)
+# Создание кнопок
+buttons = [
+    Button(428, 221, button_map_img, open_map),
+    Button(998.5, 370.8, next_img, next_map),
+    Button(351, 370.8, prev_img, prev_map),
+    Button(546, 643, play_img, play_menu),
+    Button(55, 643, all_schemes_img, schemes),
+    Button(1261.3, 47.4, settings_img, settings),
+    Button(1256.9, 234.3, statistics_img, statistics),
+]
 
-tk.mainloop()
+# Основной цикл
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Левая кнопка мыши
+                for button in buttons:
+                    button.check_click(event.pos)
+
+    # Отрисовка фона
+    screen.blit(bg, (0, 0))
+
+    # Отрисовка кнопок
+    for button in buttons:
+        button.draw(screen)
+
+    # Отрисовка шкалы опыта
+    screen.blit(bar_img, (462, 47.4))
+    screen.blit(medal_img, (451.8, 38.5))
+
+    # Отрисовка прогресс-бара
+    pygame.draw.rect(screen, GRAY, (515, 60, 370, 20))
+    pygame.draw.rect(screen, BLACK, (515, 60, 370 * 0.2, 20))  # 20% заполненности
+
+    # Обновление экрана
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
