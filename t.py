@@ -8,22 +8,31 @@ pygame.init()
 # Настройки экрана
 screen_width, screen_height = 800, 600
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("15 кнопок с прозрачным фоном")
+pygame.display.set_caption("15 кнопок с уникальными изображениями")
 
-# Загрузка изображения кнопки (предположим, что у всех кнопок одинаковое изображение)
-button_image = pygame.image.load("button.png").convert_alpha()
+# Список названий изображений
+image_names = [
+    "плазм_мембрана.png", "хлоропласты.png", "рибосомы.png", "вакуоль.png",
+    "цитоплазма.png", "плазмодесма.png", "гольджи.png", "ГЭР.png", "оболочка.png",
+    "ядрышко.png", "ГлЭР.png", "ядро.png", "стенка.png", "лизосомы.png", "митохондрии.png"
+]
 
-# Создание списка кнопок
+# Загрузка изображений и создание кнопок
 buttons = []
-for i in range(15):
-    # Случайное положение кнопки
-    x = random.randint(0, screen_width - button_image.get_width())
-    y = random.randint(0, screen_height - button_image.get_height())
-    rect = button_image.get_rect(topleft=(x, y))
-    # Создание маски для кнопки
-    mask = pygame.mask.from_surface(button_image)
-    # Добавление кнопки в список
-    buttons.append({"image": button_image, "rect": rect, "mask": mask, "name": f"Кнопка {i + 1}"})
+for i, name in enumerate(image_names):
+    try:
+        # Загрузка изображения
+        image = pygame.image.load(name).convert_alpha()
+        # Случайное положение кнопки
+        x = 0
+        y = 0
+        rect = image.get_rect(topleft=(x, y))
+        # Создание маски для кнопки
+        mask = pygame.mask.from_surface(image)
+        # Добавление кнопки в список
+        buttons.append({"image": image, "rect": rect, "mask": mask, "name": name[:-4]})  # Убираем расширение .png
+    except FileNotFoundError:
+        print(f"Ошибка: файл {name} не найден. Убедитесь, что он находится в той же директории, что и скрипт.")
 
 # Основной цикл
 running = True

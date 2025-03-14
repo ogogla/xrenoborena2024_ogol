@@ -11,7 +11,6 @@ pygame.display.set_caption("BioStudy map")
 
 # Загрузка изображений
 bg = pygame.image.load("background_map.png")
-md_button = pygame.image.load("cell.png")
 ph_inf = pygame.image.load("start.png")
 mit_inf = pygame.image.load("mit.png")
 plaz_inf = pygame.image.load("plaz_m.png")
@@ -31,6 +30,43 @@ lis_inf = pygame.image.load("liz.png")
 
 # Начальное изображение
 current_image = ph_inf
+
+# Координаты информационного изображения
+info_image_pos = (800, 70)  # Позиция для отображения текущего изображения
+
+# Координаты кнопок
+button_positions = {
+    "цитоплазма": (145, 105),
+    "плазм_мембрана": (100, 50),
+    "хлоропласты": (160, 125),
+    "рибосомы": (156, 125),
+    "вакуоль": (400, 400),
+    "гольджи": (600, 200),
+    "ГЭР": (700, 300),
+    "оболочка": (800, 400),
+    "ядрышко": (900, 100),
+    "ГлЭР": (1000, 200),
+    "ядро": (1100, 300),
+    "стенка": (112, 42),
+    "лизосомы": (185, 134),
+    "митохондрии": (147, 109),
+    "плазмодесма": (130, 333)
+}
+
+# Список кнопок
+buttons = []
+for name, pos in button_positions.items():
+    try:
+        # Загрузка изображения
+        image = pygame.image.load(f"{name}.png").convert_alpha()
+        # Создание прямоугольника для кнопки
+        rect = image.get_rect(topleft=pos)
+        # Создание маски для кнопки
+        mask = pygame.mask.from_surface(image)
+        # Добавление кнопки в список
+        buttons.append({"image": image, "rect": rect, "mask": mask, "name": name})
+    except FileNotFoundError:
+        print(f"Ошибка: файл {name}.png не найден. Убедитесь, что он находится в той же директории, что и скрипт.")
 
 # Основной цикл
 running = True
@@ -69,11 +105,55 @@ while running:
                 current_image = lis_inf
             elif event.key == pygame.K_x:
                 current_image = kst_inf
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Левая кнопка мыши
+                # Проверяем кнопки в порядке их отрисовки (сверху вниз)
+                for button in reversed(buttons):
+                    x, y = event.pos[0] - button["rect"].x, event.pos[1] - button["rect"].y
+                    # Проверяем, попал ли клик в область кнопки
+                    if 0 <= x < button["rect"].width and 0 <= y < button["rect"].height:
+                        if button["mask"].get_at((x, y)):
+                            print(f"Нажата {button['name']}")
+                            # Изменяем текущее изображение в зависимости от нажатой кнопки
+                            if button["name"] == "плазм_мембрана":
+                                current_image = plaz_inf
+                            elif button["name"] == "хлоропласты":
+                                current_image = hlor_inf
+                            elif button["name"] == "рибосомы":
+                                current_image = rib_inf
+                            elif button["name"] == "вакуоль":
+                                current_image = vak_inf
+                            elif button["name"] == "цитоплазма":
+                                current_image = sit_inf
+                            elif button["name"] == "плазмодесма":
+                                current_image = plazm_inf
+                            elif button["name"] == "гольджи":
+                                current_image = appar_inf
+                            elif button["name"] == "ГЭР":
+                                current_image = ger_inf
+                            elif button["name"] == "оболочка":
+                                current_image = kst_inf
+                            elif button["name"] == "ядрышко":
+                                current_image = yadk_inf
+                            elif button["name"] == "ГлЭР":
+                                current_image = gger_inf
+                            elif button["name"] == "ядро":
+                                current_image = yad_inf
+                            elif button["name"] == "стенка":
+                                current_image = kst_inf
+                            elif button["name"] == "лизосомы":
+                                current_image = lis_inf
+                            elif button["name"] == "митохондрии":
+                                current_image = mit_inf
+                            break  # Прекращаем проверку, если кнопка нажата
 
     # Отрисовка фона и текущего изображения
     screen.blit(bg, (0, 0))
-    screen.blit(md_button, (20, 40))
-    screen.blit(current_image, (800, 70))
+    screen.blit(current_image, info_image_pos)
+
+    # Отрисовка кнопок
+    for button in buttons:
+        screen.blit(button["image"], button["rect"].topleft)
 
     # Обновление экрана
     pygame.display.flip()
