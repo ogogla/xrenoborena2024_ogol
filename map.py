@@ -27,6 +27,7 @@ gger_inf = pygame.image.load("gger.png")
 yadk_inf = pygame.image.load("yadrk.png")
 yad_inf = pygame.image.load("yadro.png")
 lis_inf = pygame.image.load("liz.png")
+s_yad_inf = pygame.image.load("s_yad.png")
 
 # Начальное изображение
 current_image = ph_inf
@@ -40,16 +41,16 @@ button_positions = {
     "плазм_мембрана": (100, 50),
     "хлоропласты": (160, 125),
     "рибосомы": (156, 125),
-    "вакуоль": (400, 400),
-    "гольджи": (600, 200),
-    "ГЭР": (700, 300),
-    "оболочка": (800, 400),
-    "ядрышко": (900, 100),
-    "ГлЭР": (1000, 200),
-    "ядро": (1100, 300),
+    "вакуоль": (190, 160),
+    "гольджи": (300, 350),
+    "ГЭР": (200, 390),
+    "оболочка": (325, 415),
+    "ГлЭР": (172, 470),
+    "ядро": (228, 412),
     "стенка": (112, 42),
     "лизосомы": (185, 134),
     "митохондрии": (147, 109),
+    "ядрышко": (317, 480),
     "плазмодесма": (130, 333)
 }
 
@@ -130,13 +131,13 @@ while running:
                             elif button["name"] == "гольджи":
                                 current_image = appar_inf
                             elif button["name"] == "ГЭР":
-                                current_image = ger_inf
+                                current_image = gger_inf
                             elif button["name"] == "оболочка":
-                                current_image = kst_inf
+                                current_image = s_yad_inf
                             elif button["name"] == "ядрышко":
                                 current_image = yadk_inf
                             elif button["name"] == "ГлЭР":
-                                current_image = gger_inf
+                                current_image = ger_inf
                             elif button["name"] == "ядро":
                                 current_image = yad_inf
                             elif button["name"] == "стенка":
