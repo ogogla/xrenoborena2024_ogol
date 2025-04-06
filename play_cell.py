@@ -20,6 +20,7 @@ BLUE = (50, 50, 255)
 GRAY = (200, 200, 200)
 LIGHT_GREEN = (200, 255, 200)
 LIGHT_RED = (255, 200, 200)
+DARK_OVERLAY = (0, 0, 0, 180)  # Полупрозрачный темный цвет для затемнения
 
 # Шрифты
 try:
@@ -27,14 +28,16 @@ try:
     question_font = pygame.font.Font("arial.ttf", 32)
     timer_font = pygame.font.Font("arial.ttf", 28)
     button_font = pygame.font.Font("arial.ttf", 24)
-    feedback_font = pygame.font.Font("arial.ttf", 28)  # Уменьшен размер шрифта
+    feedback_font = pygame.font.Font("arial.ttf", 28)
+    rules_font = pygame.font.Font("arial.ttf", 22)  # Шрифт для правил
 except:
     # Если шрифты не найдены, используем системные
     title_font = pygame.font.SysFont("Arial", 48, bold=True)
     question_font = pygame.font.SysFont("Arial", 32)
     timer_font = pygame.font.SysFont("Arial", 28, bold=True)
     button_font = pygame.font.SysFont("Arial", 24)
-    feedback_font = pygame.font.SysFont("Arial", 28, bold=True)  # Уменьшен размер шрифта
+    feedback_font = pygame.font.SysFont("Arial", 28, bold=True)
+    rules_font = pygame.font.SysFont("Arial", 22)
 
 # Загрузка изображений
 try:
@@ -112,6 +115,8 @@ random.shuffle(questions)
 current_question_index = 0
 current_question = questions[current_question_index]
 start_time = time.time()
+pause_start_time = 0
+paused_time = 0
 time_limit = 15
 feedback = None
 feedback_time = 0
@@ -119,6 +124,28 @@ score = 0
 total_questions = len(questions)
 game_over = False
 click_processed = False  # Флаг для обработки клика
+paused = False  # Флаг паузы
+show_rules = False  # Флаг показа правил
+
+# Кнопки паузы и правил
+pause_button = pygame.Rect(10, 10, 100, 40)
+rules_button = pygame.Rect(120, 10, 150, 40)
+continue_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 50, 200, 50)
+back_button = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 100, 200, 50)
+
+# Правила игры
+rules_text = [
+    "Правила игры BioStudy Quiz:",
+    "",
+    "1. Вам будут задаваться вопросы о строении клетки.",
+    "2. Для ответа нужно кликнуть на соответствующий органоид на изображении.",
+    "3. На каждый вопрос дается 15 секунд.",
+    "4. За правильный ответ вы получаете 1 очко.",
+    "5. Игра завершается после ответа на все вопросы.",
+    "6. Вы можете поставить игру на паузу кнопкой в верхнем левом углу.",
+    "",
+    "Цель игры: набрать максимальное количество очков!"
+]
 
 
 def draw_text_multiline(text, font, color, x, y, max_width):
@@ -148,115 +175,202 @@ while running:
     screen.fill(WHITE)
     screen.blit(bg, (0, 0))
 
+    # Отрисовка кнопок паузы и правил
+    pygame.draw.rect(screen, BLUE, pause_button)
+    pygame.draw.rect(screen, BLUE, rules_button)
+
+    pause_text = button_font.render("Пауза", True, WHITE)
+    rules_text_btn = button_font.render("Правила игры", True, WHITE)
+
+    screen.blit(pause_text, (pause_button.x + (pause_button.width - pause_text.get_width()) // 2,
+                             pause_button.y + (pause_button.height - pause_text.get_height()) // 2))
+    screen.blit(rules_text_btn, (rules_button.x + (rules_button.width - rules_text_btn.get_width()) // 2,
+                                 rules_button.y + (rules_button.height - rules_text_btn.get_height()) // 2))
+
     # Отображение заголовка
     title_text = title_font.render("BioStudy Quiz", True, BLUE)
     screen.blit(title_text, (700, 10))
 
-    # Отображение текущего вопроса
-    draw_text_multiline(current_question["question"], question_font, BLACK, 700, 70, WIDTH - 710)
+    # Если игра на паузе
+    if paused:
+        # Затемнение экрана
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill(DARK_OVERLAY)
+        screen.blit(overlay, (0, 0))
 
-    # Отображение таймера
-    elapsed_time = time.time() - start_time
-    remaining_time = max(0, time_limit - int(elapsed_time))
-    timer_color = RED if remaining_time < 5 else BLACK
-    timer_text = timer_font.render(f"Время: {remaining_time} сек", True, timer_color)
-    screen.blit(timer_text, (700, 150))
+        # Сообщение о паузе
+        pause_msg = title_font.render("Игра на паузе", True, WHITE)
+        screen.blit(pause_msg, (WIDTH // 2 - pause_msg.get_width() // 2, HEIGHT // 2 - 100))
 
-    # Отображение счета
-    score_text = timer_font.render(f"Счет: {score}/{total_questions}", True, BLUE)
-    screen.blit(score_text, (700, 190))
+        # Кнопка продолжения
+        pygame.draw.rect(screen, GREEN, continue_button)
+        continue_text = button_font.render("Продолжить", True, BLACK)
+        screen.blit(continue_text, (continue_button.x + (continue_button.width - continue_text.get_width()) // 2,
+                                    continue_button.y + (continue_button.height - continue_text.get_height()) // 2))
 
-    # Отрисовка кнопок
-    for button in buttons:
-        screen.blit(button["image"], button["rect"].topleft)
+    # Если показываем правила
+    elif show_rules:
+        # Затемнение экрана
+        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        overlay.fill(DARK_OVERLAY)
+        screen.blit(overlay, (0, 0))
 
-    # Отображение обратной связи (уменьшенный размер)
-    if feedback:
-        feedback_width = max(300, feedback_font.size(feedback["text"])[0] + 40)
-        feedback_surface = pygame.Surface((feedback_width, 50), pygame.SRCALPHA)
-        feedback_color = LIGHT_GREEN if feedback["correct"] else LIGHT_RED
-        feedback_surface.fill((*feedback_color[:3], 200))
+        # Окно правил
+        rules_window = pygame.Surface((800, 500), pygame.SRCALPHA)
+        rules_window.fill((230, 230, 230, 240))
+        screen.blit(rules_window, (WIDTH // 2 - 400, HEIGHT // 2 - 250))
 
-        feedback_text = feedback_font.render(
-            feedback["text"],
-            True,
-            GREEN if feedback["correct"] else RED
-        )
+        # Заголовок правил
+        rules_title = title_font.render("Правила игры", True, BLUE)
+        screen.blit(rules_title, (WIDTH // 2 - rules_title.get_width() // 2, HEIGHT // 2 - 220))
 
-        screen.blit(feedback_surface, (700, 240))
-        screen.blit(feedback_text, (700 + (feedback_width - feedback_text.get_width()) // 2, 250))
+        # Текст правил
+        for i, line in enumerate(rules_text):
+            if line:  # Пропускаем пустые строки
+                rule_line = rules_font.render(line, True, BLACK)
+                screen.blit(rule_line, (WIDTH // 2 - 380, HEIGHT // 2 - 150 + i * 30))
 
-        if time.time() - feedback_time > 1.5:
-            feedback = None
-            click_processed = False  # Сбрасываем флаг после скрытия feedback
+        # Кнопка назад
+        pygame.draw.rect(screen, RED, back_button)
+        back_text = button_font.render("Назад", True, WHITE)
+        screen.blit(back_text, (back_button.x + (back_button.width - back_text.get_width()) // 2,
+                                back_button.y + (back_button.height - back_text.get_height()) // 2))
 
-    # Отображение сообщения о завершении игры
-    if game_over:
-        game_over_surface = pygame.Surface((500, 200), pygame.SRCALPHA)
-        game_over_surface.fill((230, 230, 230, 240))
-        screen.blit(game_over_surface, (450, 250))
+    # Если игра активна (не на паузе и не показываем правила)
+    else:
+        # Отображение текущего вопроса
+        draw_text_multiline(current_question["question"], question_font, BLACK, 700, 70, WIDTH - 710)
 
-        game_over_text = title_font.render("Игра завершена!", True, BLUE)
-        final_score_text = question_font.render(f"Ваш счет: {score}/{total_questions}", True, BLACK)
-        restart_text = button_font.render("Нажмите R для перезапуска", True, BLACK)
+        # Отображение таймера
+        elapsed_time = time.time() - start_time - paused_time
+        remaining_time = max(0, time_limit - int(elapsed_time))
+        timer_color = RED if remaining_time < 5 else BLACK
+        timer_text = timer_font.render(f"Время: {remaining_time} сек", True, timer_color)
+        screen.blit(timer_text, (700, 150))
 
-        screen.blit(game_over_text, (450 + (500 - game_over_text.get_width()) // 2, 270))
-        screen.blit(final_score_text, (450 + (500 - final_score_text.get_width()) // 2, 330))
-        screen.blit(restart_text, (450 + (500 - restart_text.get_width()) // 2, 380))
+        # Отображение счета
+        score_text = timer_font.render(f"Счет: {score}/{total_questions}", True, BLUE)
+        screen.blit(score_text, (700, 190))
 
-    # Проверка времени
-    if not game_over and not feedback and elapsed_time >= time_limit:
-        feedback = {"text": "Время вышло!", "correct": False}
-        feedback_time = time.time()
-        current_question_index += 1
+        # Отрисовка кнопок
+        for button in buttons:
+            screen.blit(button["image"], button["rect"].topleft)
 
-        if current_question_index < len(questions):
-            current_question = questions[current_question_index]
-            start_time = time.time()
-        else:
-            game_over = True
+        # Отображение обратной связи
+        if feedback:
+            feedback_width = max(300, feedback_font.size(feedback["text"])[0] + 40)
+            feedback_surface = pygame.Surface((feedback_width, 50), pygame.SRCALPHA)
+            feedback_color = LIGHT_GREEN if feedback["correct"] else LIGHT_RED
+            feedback_surface.fill((*feedback_color[:3], 200))
+
+            feedback_text = feedback_font.render(
+                feedback["text"],
+                True,
+                GREEN if feedback["correct"] else RED
+            )
+
+            screen.blit(feedback_surface, (700, 240))
+            screen.blit(feedback_text, (700 + (feedback_width - feedback_text.get_width()) // 2, 250))
+
+            if time.time() - feedback_time > 1.5:
+                feedback = None
+                click_processed = False  # Сбрасываем флаг после скрытия feedback
+
+        # Отображение сообщения о завершении игры
+        if game_over:
+            game_over_surface = pygame.Surface((500, 200), pygame.SRCALPHA)
+            game_over_surface.fill((230, 230, 230, 240))
+            screen.blit(game_over_surface, (450, 250))
+
+            game_over_text = title_font.render("Игра завершена!", True, BLUE)
+            final_score_text = question_font.render(f"Ваш счет: {score}/{total_questions}", True, BLACK)
+            restart_text = button_font.render("Нажмите R для перезапуска", True, BLACK)
+
+            screen.blit(game_over_text, (450 + (500 - game_over_text.get_width()) // 2, 270))
+            screen.blit(final_score_text, (450 + (500 - final_score_text.get_width()) // 2, 330))
+            screen.blit(restart_text, (450 + (500 - restart_text.get_width()) // 2, 380))
+
+        # Проверка времени
+        if not game_over and not feedback and elapsed_time >= time_limit:
+            feedback = {"text": "Время вышло!", "correct": False}
+            feedback_time = time.time()
+            current_question_index += 1
+
+            if current_question_index < len(questions):
+                current_question = questions[current_question_index]
+                start_time = time.time()
+                paused_time = 0
+            else:
+                game_over = True
 
     # Обработка событий
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-        elif event.type == pygame.MOUSEBUTTONDOWN and not game_over and not feedback and not click_processed:
+        elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Левая кнопка мыши
-                for button in reversed(buttons):
-                    x, y = event.pos[0] - button["rect"].x, event.pos[1] - button["rect"].y
-                    if 0 <= x < button["rect"].width and 0 <= y < button["rect"].height:
-                        if button["mask"].get_at((x, y)):
-                            click_processed = True  # Запрещаем обработку новых кликов
+                mouse_pos = event.pos
 
-                            if button["name"] == current_question["answer"]:
-                                feedback = {"text": "Правильно!", "correct": True}
-                                score += 1
-                            else:
-                                feedback = {
-                                    "text": f"Ошибка! Правильно: {current_question['answer']}",
-                                    "correct": False
-                                }
-                            feedback_time = time.time()
+                # Если игра на паузе
+                if paused:
+                    if continue_button.collidepoint(mouse_pos):
+                        paused = False
+                        paused_time += time.time() - pause_start_time
 
-                            current_question_index += 1
-                            if current_question_index < len(questions):
-                                current_question = questions[current_question_index]
-                                start_time = time.time()
-                            else:
-                                game_over = True
-                            break
+                # Если показываем правила
+                elif show_rules:
+                    if back_button.collidepoint(mouse_pos):
+                        show_rules = False
 
-        elif event.type == pygame.KEYDOWN and game_over:
-            if event.key == pygame.K_r:  # Перезапуск игры
+                # Если игра активна
+                elif not game_over and not feedback and not click_processed:
+                    # Проверка кнопок паузы и правил
+                    if pause_button.collidepoint(mouse_pos):
+                        paused = True
+                        pause_start_time = time.time()
+                    elif rules_button.collidepoint(mouse_pos):
+                        show_rules = True
+                    else:
+                        # Обработка кликов по органоидам
+                        for button in reversed(buttons):
+                            x, y = event.pos[0] - button["rect"].x, event.pos[1] - button["rect"].y
+                            if 0 <= x < button["rect"].width and 0 <= y < button["rect"].height:
+                                if button["mask"].get_at((x, y)):
+                                    click_processed = True  # Запрещаем обработку новых кликов
+
+                                    if button["name"] == current_question["answer"]:
+                                        feedback = {"text": "Правильно!", "correct": True}
+                                        score += 1
+                                    else:
+                                        feedback = {
+                                            "text": f"Ошибка! Правильно: {current_question['answer']}",
+                                            "correct": False
+                                        }
+                                    feedback_time = time.time()
+
+                                    current_question_index += 1
+                                    if current_question_index < len(questions):
+                                        current_question = questions[current_question_index]
+                                        start_time = time.time()
+                                        paused_time = 0
+                                    else:
+                                        game_over = True
+                                    break
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r and game_over:  # Перезапуск игры
                 current_question_index = 0
                 random.shuffle(questions)
                 current_question = questions[current_question_index]
                 start_time = time.time()
+                paused_time = 0
                 score = 0
                 feedback = None
                 game_over = False
                 click_processed = False
+                paused = False
+                show_rules = False
 
     pygame.display.flip()
 

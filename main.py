@@ -30,29 +30,37 @@ GRAY = (200, 200, 200)
 # Шрифт
 font = pygame.font.Font(None, 36)
 
+
 # Функции для кнопок
 def open_map():
     print("Открыть карту")
     # Запуск файла map_cell.py
     subprocess.Popen([sys.executable, "map_cell.py"])
 
+
 def next_map():
     print("Следующая карта")
+
 
 def prev_map():
     print("Предыдущая карта")
 
+
 def play_menu():
     subprocess.Popen([sys.executable, "play_cell.py"])
+
 
 def schemes():
     print("Все схемы")
 
+
 def settings():
     print("Настройки")
 
+
 def statistics():
     print("Статистика")
+
 
 # Класс для кнопок
 class Button:
@@ -67,6 +75,7 @@ class Button:
     def check_click(self, pos):
         if self.rect.collidepoint(pos):
             self.action()
+
 
 # Создание кнопок
 buttons = [
